@@ -1,23 +1,24 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getProjects, PROJECTS_KEY } from '../storage'
-
-const LOGOS = [
-  { name: 'Nike',      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1200px-Logo_NIKE.svg.png', url: '#', noFilter: false },
-  { name: 'Apple',     img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/800px-Apple_logo_black.svg.png', url: '#', noFilter: false },
-  { name: 'Google',    img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png', url: '#', noFilter: false },
-  { name: 'Microsoft', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/1200px-Microsoft_logo_%282012%29.svg.png', url: '#', noFilter: true },
-  { name: 'Meta',      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/1200px-Meta_Platforms_Inc._logo.svg.png', url: '#', noFilter: true },
-  { name: 'Amazon',    img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1200px-Amazon_logo.svg.png', url: '#', noFilter: true },
-]
+import { getProjects, PROJECTS_KEY, getClients } from '../storage'
 
 function LogoBar() {
+  const [clients, setClients] = useState(getClients)
+
+  useEffect(() => {
+    const reload = () => setClients(getClients())
+    window.addEventListener('mazin:clients', reload)
+    window.addEventListener('storage', reload)
+    return () => {
+      window.removeEventListener('mazin:clients', reload)
+      window.removeEventListener('storage', reload)
+    }
+  }, [])
+
+  const items = [...clients, ...clients, ...clients, ...clients]
+
   return (
-    <div style={{
-      overflow: 'hidden',
-      padding: '48px 0',
-      background: 'var(--bg)',
-    }}>
+    <div style={{ overflow: 'hidden', padding: '48px 0', background: 'var(--bg)' }}>
       <style>{`
         @keyframes marquee-right {
           0%   { transform: translateX(-50%); }
@@ -29,31 +30,17 @@ function LogoBar() {
           animation: marquee-right 35s linear infinite;
         }
         .marquee-track:hover { animation-play-state: paused; }
-        .logo-item { transition: opacity 0.3s ease; opacity: 0.3; text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 0 60px; flex-shrink: 0; height: 48px; }
+        .logo-item { transition: opacity 0.3s ease; opacity: 0.3; display: flex; align-items: center; justify-content: center; padding: 0 60px; flex-shrink: 0; height: 48px; }
         .logo-item:hover { opacity: 1; }
       `}</style>
       <div className="marquee-track">
-        {[...LOGOS, ...LOGOS, ...LOGOS, ...LOGOS].map((logo, i) => (
-          <a
-            key={i}
-            href={logo.url}
-            target="_blank"
-            rel="noreferrer"
-            className="logo-item"
-          >
-            <img
-              src={logo.img}
-              alt={logo.name}
-              style={{
-                height: 28,
-                width: 'auto',
-                maxWidth: 120,
-                objectFit: 'contain',
-                filter: logo.noFilter ? 'none' : 'brightness(0) invert(1)',
-                pointerEvents: 'none',
-              }}
-            />
-          </a>
+        {items.map((client, i) => (
+          <div key={i} className="logo-item">
+            {client.logo
+              ? <img src={client.logo} alt={client.name} style={{ height: 28, width: 'auto', maxWidth: 120, objectFit: 'contain', pointerEvents: 'none' }} />
+              : <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text)', whiteSpace: 'nowrap' }}>{client.name}</span>
+            }
+          </div>
         ))}
       </div>
     </div>

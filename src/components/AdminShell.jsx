@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getProjects, saveProjects, uid } from '../storage'
 import ProjectForm from './ProjectForm'
 import AboutForm from './AboutForm'
+import ClientsForm from './ClientsForm'
 
 export default function AdminShell({ onLogout }) {
   const [tab,      setTab]      = useState('projects')
@@ -63,6 +64,7 @@ export default function AdminShell({ onLogout }) {
           <div style={{ display: 'flex', gap: 4, marginLeft: 8 }}>
             {tabBtn('projects', 'Portfolio')}
             {tabBtn('about', 'About')}
+            {tabBtn('clients', 'Clients')}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -82,6 +84,8 @@ export default function AdminShell({ onLogout }) {
       {/* Body */}
       {tab === 'about'
         ? <main style={{ flex: 1, overflowY: 'auto', padding: '44px 56px', background: 'var(--bg)' }}><AboutForm /></main>
+        : tab === 'clients'
+        ? <main style={{ flex: 1, overflowY: 'auto', padding: '44px 56px', background: 'var(--bg)' }}><ClientsForm /></main>
         : (
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
             {/* Sidebar */}

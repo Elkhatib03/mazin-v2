@@ -1,5 +1,6 @@
 export const PROJECTS_KEY = 'mazin_projects'
 export const ABOUT_KEY    = 'mazin_about'
+export const CLIENTS_KEY  = 'mazin_clients'
 
 export const DEFAULT_ABOUT = {
   name:      'Mazin Elkhatib',
@@ -105,15 +106,28 @@ export function saveAbout(data) {
   window.dispatchEvent(new CustomEvent('mazin:about'))
 }
 
-export function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+export const DEFAULT_CLIENTS = [
+  { id: 1, name: 'Meta',      logo: '' },
+  { id: 2, name: 'Amazon',    logo: '' },
+  { id: 3, name: 'Nike',      logo: '' },
+  { id: 4, name: 'Apple',     logo: '' },
+  { id: 5, name: 'Google',    logo: '' },
+  { id: 6, name: 'Microsoft', logo: '' },
+]
+
+export function getClients() {
+  try {
+    const raw = localStorage.getItem(CLIENTS_KEY)
+    if (!raw) return DEFAULT_CLIENTS
+    return JSON.parse(raw)
+  } catch { return DEFAULT_CLIENTS }
 }
 
-export function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload  = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
+export function saveClients(clients) {
+  localStorage.setItem(CLIENTS_KEY, JSON.stringify(clients))
+  window.dispatchEvent(new CustomEvent('mazin:clients'))
+}
+
+export function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }

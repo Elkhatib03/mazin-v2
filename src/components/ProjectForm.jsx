@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { fileToBase64 } from '../storage'
+import uploadToCloudinary from '../cloudinary'
 
 const fi = { width: '100%', padding: '11px 14px', border: '1px solid var(--border)', borderRadius: 3, fontSize: 13, fontFamily: 'inherit', background: 'var(--bg2)', color: 'var(--text)', outline: 'none', marginBottom: 20, transition: 'border-color 0.2s' }
 const lb = { display: 'block', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 7 }
@@ -30,10 +30,10 @@ export default function ProjectForm({ project, isNew, onSave, onDelete }) {
     if (!file || !file.type.startsWith('image/')) return
     setUpl(true)
     try {
-      const b64 = await fileToBase64(file)
-      if (isCover) set('image', b64)
-      else setForm(f => ({ ...f, photos: [...f.photos, b64] }))
-    } catch { alert('Could not read image.') }
+      const url = await uploadToCloudinary(file)
+      if (isCover) set('image', url)
+      else setForm(f => ({ ...f, photos: [...f.photos, url] }))
+    } catch { alert('Upload failed. Check your connection and try again.') }
     setUpl(false)
   }
 
@@ -42,7 +42,7 @@ export default function ProjectForm({ project, isNew, onSave, onDelete }) {
     const results = []
     for (const file of files) {
       if (file.type.startsWith('image/')) {
-        try { results.push(await fileToBase64(file)) } catch {}
+        try { results.push(await uploadToCloudinary(file)) } catch {}
       }
     }
     setForm(f => ({ ...f, photos: [...f.photos, ...results] }))
