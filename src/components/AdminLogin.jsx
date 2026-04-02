@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-const ADMIN_PASSWORD = 'mazin2025'
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD
 
 export default function AdminLogin({ onLogin }) {
   const [pw, setPw]       = useState('')
@@ -34,9 +34,6 @@ export default function AdminLogin({ onLogin }) {
           style={{ width: '100%', padding: 13, background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: 3, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'inherit', cursor: 'pointer' }}>
           Enter
         </button>
-        <p style={{ marginTop: 24, fontSize: 11, color: 'var(--subtle)' }}>
-          Change password in <code style={{ background: 'var(--bg3)', padding: '1px 5px', borderRadius: 2, fontSize: 10, color: 'var(--muted)' }}>AdminLogin.jsx</code> line 3
-        </p>
       </div>
     </div>
   )
