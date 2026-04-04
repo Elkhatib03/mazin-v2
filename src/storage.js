@@ -9,7 +9,7 @@ export const DEFAULT_ABOUT = {
   bio:       "I'm an Art Director with over 10 years of experience shaping brands, campaigns, and digital experiences across Jordan and the UAE. I believe great design is not just about aesthetics — it's about telling stories that move people.\n\nCurrently leading creative at Black Orange in Dubai, I've worked with agencies like VMLY&R and Sudacé, collaborating with brands across the region to build identities that endure.",
   photo:     '',
   email:     'maz.designs92@gmail.com',
-  linkedin:  'https://www.linkedin.com/in/mazinelkhatib-الخطيب-مازن-b5664910b',
+  linkedin:  'https://www.linkedin.com/in/mazin-elkhatib-مازن-الخطيب-b5664910b',
   instagram: 'https://www.instagram.com/Mazin.elkhatib',
   behance:   'https://www.behance.net/MazElkhatib',
   skills:    ['Art Direction','Brand Identity','Advertising','Animation Direction','Artistic Direction','Design Leadership','Typography','Visual Storytelling'],
