@@ -52,6 +52,7 @@ export default function HomePage() {
     getProjects().filter(p => p.status === 'published')
   )
   const [scrollY, setScrollY] = useState(0)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
 
   useEffect(() => {
     const reload = () => setProjects(getProjects().filter(p => p.status === 'published'))
@@ -69,26 +70,25 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
   return (
     <div style={{ paddingTop: 'var(--nav-h)', background: 'var(--bg)', minHeight: '100vh' }}>
 
       {/* Hero intro */}
-      <div style={{
-        position: 'fixed',
-        top: 'var(--nav-h)',
-        left: 0, right: 0,
-        zIndex: 10,
-        pointerEvents: scrollY > 200 ? 'none' : 'auto',
-        opacity: Math.max(0, 1 - scrollY / 200),
-        transform: `translateY(${Math.min(scrollY * 0.3, 60)}px)`,
-        transition: 'none',
-        background: 'var(--bg)',
-        padding: '72px 48px 60px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 20,
-      }}>
+      <div
+        className="hero-section"
+        style={isMobile ? undefined : {
+          pointerEvents: scrollY > 200 ? 'none' : 'auto',
+          opacity: Math.max(0, 1 - scrollY / 200),
+          transform: `translateY(${Math.min(scrollY * 0.3, 60)}px)`,
+          transition: 'none',
+        }}
+      >
         <span style={{
           fontSize: 11,
           letterSpacing: '0.18em',
@@ -100,7 +100,7 @@ export default function HomePage() {
         </span>
 
         <p style={{
-          fontSize: 'clamp(30px, 4.5vw, 58px)',
+          fontSize: 'clamp(22px, 4.5vw, 58px)',
           color: 'var(--text)',
           lineHeight: 1.25,
           maxWidth: 800,
@@ -110,7 +110,6 @@ export default function HomePage() {
           margin: 0,
         }}>
           Hello ✌︎ I'm Mazin — Design Director and ✎ visual artist living in ↬ Dubai
-          <br />
         </p>
 
         <div style={{
@@ -124,29 +123,23 @@ export default function HomePage() {
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           color: 'var(--muted)',
+          whiteSpace: 'nowrap',
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block', flexShrink: 0 }} />
           Available for work · Dubai, UAE
         </div>
       </div>
 
       {/* Project grid */}
       {projects.length === 0 ? (
-        <div style={{ padding: '80px 48px', textAlign: 'center', color: 'var(--muted)', marginTop: 340 }}>
+        <div className="project-grid-offset" style={{ padding: '80px 24px', textAlign: 'center', color: 'var(--muted)' }}>
           <p style={{ fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             No projects yet. Add some from the admin panel.
           </p>
         </div>
       ) : (
-        <>
-          <div style={{
-            padding: '24px 24px 12px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderTop: '1px solid var(--border)',
-            marginTop: 340,
-          }}>
+        <div className="project-grid-offset">
+          <div className="project-grid-header">
             <span style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
               Selected Work
             </span>
@@ -154,17 +147,10 @@ export default function HomePage() {
               {projects.length} Projects
             </span>
           </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 16,
-            padding: '0 24px',
-            marginTop: 40,
-            borderTop: '1px solid var(--border)',
-          }}>
+          <div className="project-grid">
             {projects.map(p => <GridItem key={p.id} project={p} />)}
           </div>
-        </>
+        </div>
       )}
 
       {/* Logo bar at the bottom */}
@@ -206,7 +192,7 @@ function GridItem({ project }) {
           padding: 48,
         }}>
           <p style={{
-            fontSize: 'clamp(16px, 2vw, 24px)',
+            fontSize: 'clamp(14px, 2vw, 24px)',
             fontWeight: 500,
             color: '#fff',
             textAlign: 'center',

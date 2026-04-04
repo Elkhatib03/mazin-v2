@@ -17,13 +17,13 @@ export default function AboutPage() {
 
   return (
     <div style={{ paddingTop: 'var(--nav-h)', minHeight: '100vh', background: 'var(--bg)' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '64px 48px 120px' }}>
+      <div className="about-wrapper">
 
         {/* Hero */}
-        <div style={{ display: 'grid', gridTemplateColumns: a.photo ? '1fr 280px' : '1fr', gap: 64, alignItems: 'start' }}>
+        <div className={`about-hero-grid${a.photo ? ' has-photo' : ''}`}>
           <div>
             <p style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 20 }}>About</p>
-            <h1 style={{ fontSize: 28, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text)', marginBottom: 8 }}>{a.name}</h1>
+            <h1 style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text)', marginBottom: 8 }}>{a.name}</h1>
             <p style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 36 }}>{a.title} — {a.location}</p>
             {a.bio.split('\n\n').map((p, i) => (
               <p key={i} style={{ fontSize: 15, lineHeight: 1.85, color: 'var(--text)', opacity: 0.8, marginBottom: 18, maxWidth: 580 }}>{p}</p>
@@ -55,7 +55,7 @@ export default function AboutPage() {
 
         {/* Services */}
         <p style={secLabel}>Services <span style={line} /></p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 1, background: 'var(--border)' }}>
+        <div className="services-grid">
           {a.services.map((sv, i) => (
             <div key={i} style={{ padding: '28px 24px', background: 'var(--bg2)' }}>
               <p style={{ fontSize: 12, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 10 }}>{sv.title}</p>
@@ -80,7 +80,11 @@ export default function AboutPage() {
         <p style={secLabel}>Experience <span style={line} /></p>
         <div>
           {a.experience.map((ex, i) => (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: 24, paddingBottom: 28, marginBottom: 28, borderBottom: i < a.experience.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            <div
+              key={i}
+              className="experience-row"
+              style={{ borderBottom: i < a.experience.length - 1 ? '1px solid var(--border)' : 'none' }}
+            >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                   <p style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text)' }}>{ex.company}</p>
@@ -88,7 +92,7 @@ export default function AboutPage() {
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--muted)' }}>{ex.role}</p>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div className="experience-right">
                 <p style={{ fontSize: 12, color: 'var(--muted)' }}>{ex.period}</p>
                 <p style={{ fontSize: 11, color: 'var(--subtle)', marginTop: 3 }}>{ex.location}</p>
               </div>
@@ -113,7 +117,7 @@ export default function AboutPage() {
         <div style={divider} />
 
         {/* Certs + Languages */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64 }}>
+        <div className="certs-langs">
           <div>
             <p style={secLabel}>Certifications <span style={line} /></p>
             {a.certifications.map((c, i) => (
@@ -122,7 +126,7 @@ export default function AboutPage() {
           </div>
           <div>
             <p style={secLabel}>Languages <span style={line} /></p>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {a.languages.map((l, i) => (
                 <span key={i} style={{ padding: '8px 20px', border: '1px solid var(--border)', borderRadius: 2, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text)', background: 'var(--bg2)' }}>{l}</span>
               ))}

@@ -29,7 +29,7 @@ export default function ProjectPage() {
 
   return (
     <div style={{ paddingTop: 'var(--nav-h)', background: 'var(--bg)', minHeight: '100vh' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '56px 48px 120px' }}>
+      <div className="project-wrapper">
 
         {/* Back */}
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', textDecoration: 'none', marginBottom: 56 }}>
