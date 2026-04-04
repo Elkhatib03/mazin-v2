@@ -24,7 +24,7 @@ export default function Nav() {
           style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', textDecoration: 'none' }}>
           Instagram
         </a>
-        <a href="https://www.linkedin.com/in/mazinelkhatib-الخطيب-مازن-b5664910b" target="_blank" rel="noreferrer"
+        <a href="https://www.linkedin.com/in/mazin-elkhatib-مازن-الخطيب-b5664910b" target="_blank" rel="noreferrer"
           style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', textDecoration: 'none' }}>
           LinkedIn
         </a>
