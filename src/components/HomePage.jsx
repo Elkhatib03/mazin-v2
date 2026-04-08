@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getProjects, PROJECTS_KEY, getClients } from '../storage'
+import { getProjects, getClients } from '../storage'
 
 function LogoBar() {
-  const [clients, setClients] = useState(getClients)
+  const [clients, setClients] = useState([])
 
   useEffect(() => {
-    const reload = () => setClients(getClients())
+    getClients().then(setClients)
+    const reload = () => getClients().then(setClients)
     window.addEventListener('mazin:clients', reload)
-    window.addEventListener('storage', reload)
-    return () => {
-      window.removeEventListener('mazin:clients', reload)
-      window.removeEventListener('storage', reload)
-    }
+    return () => window.removeEventListener('mazin:clients', reload)
   }, [])
 
   const items = [...clients, ...clients, ...clients, ...clients]
@@ -48,20 +45,19 @@ function LogoBar() {
 }
 
 export default function HomePage() {
-  const [projects, setProjects] = useState(() =>
-    getProjects().filter(p => p.status === 'published')
-  )
-  const [scrollY, setScrollY] = useState(0)
+  const [projects, setProjects] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [scrollY,  setScrollY]  = useState(0)
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
 
   useEffect(() => {
-    const reload = () => setProjects(getProjects().filter(p => p.status === 'published'))
+    getProjects().then(data => {
+      setProjects(data.filter(p => p.status === 'published'))
+      setLoading(false)
+    })
+    const reload = () => getProjects().then(data => setProjects(data.filter(p => p.status === 'published')))
     window.addEventListener('mazin:projects', reload)
-    window.addEventListener('storage', e => { if (e.key === PROJECTS_KEY) reload() })
-    return () => {
-      window.removeEventListener('mazin:projects', reload)
-      window.removeEventListener('storage', reload)
-    }
+    return () => window.removeEventListener('mazin:projects', reload)
   }, [])
 
   useEffect(() => {
@@ -131,7 +127,11 @@ export default function HomePage() {
       </div>
 
       {/* Project grid */}
-      {projects.length === 0 ? (
+      {loading ? (
+        <div className="project-grid-offset" style={{ padding: '80px 24px', textAlign: 'center', color: 'var(--muted)' }}>
+          <p style={{ fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loading…</p>
+        </div>
+      ) : projects.length === 0 ? (
         <div className="project-grid-offset" style={{ padding: '80px 24px', textAlign: 'center', color: 'var(--muted)' }}>
           <p style={{ fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             No projects yet. Add some from the admin panel.

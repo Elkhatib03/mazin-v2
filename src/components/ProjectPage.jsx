@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getProjects, PROJECTS_KEY } from '../storage'
+import { getProjects } from '../storage'
 
 export default function ProjectPage() {
   const { id } = useParams()
@@ -9,17 +9,23 @@ export default function ProjectPage() {
   const [lightboxImg, setLightboxImg] = useState(null)
 
   useEffect(() => {
-    const load = () => {
-      const p = getProjects().find(x => x.id === id)
+    let cancelled = false
+
+    async function load() {
+      const projects = await getProjects()
+      if (cancelled) return
+      const p = projects.find(x => x.id === id)
       if (!p) navigate('/')
       else setProject(p)
     }
+
     load()
-    window.addEventListener('mazin:projects', load)
-    window.addEventListener('storage', e => { if (e.key === PROJECTS_KEY) load() })
+
+    const reload = () => load()
+    window.addEventListener('mazin:projects', reload)
     return () => {
-      window.removeEventListener('mazin:projects', load)
-      window.removeEventListener('storage', load)
+      cancelled = true
+      window.removeEventListener('mazin:projects', reload)
     }
   }, [id, navigate])
 

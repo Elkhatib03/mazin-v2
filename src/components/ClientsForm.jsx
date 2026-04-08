@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getClients, saveClients } from '../storage'
 import uploadToCloudinary from '../cloudinary'
 
@@ -6,21 +6,30 @@ const fi = { width: '100%', padding: '9px 12px', border: '1px solid var(--border
 const fo = e => e.target.style.borderColor = 'var(--accent)'
 const fb = e => e.target.style.borderColor = 'var(--border)'
 
-let idCounter = Date.now()
-function newId() { return ++idCounter }
+let tempId = Date.now()
+function newTempId() { return `temp_${++tempId}` }
 
 export default function ClientsForm() {
-  const [clients, setClients] = useState(getClients)
+  const [clients,   setClients]   = useState([])
+  const [loading,   setLoading]   = useState(true)
   const [uploading, setUploading] = useState({})
-  const [saved, setSaved] = useState(false)
+  const [saved,     setSaved]     = useState(false)
+  const [saving,    setSaving]    = useState(false)
   const fileRefs = useRef({})
+
+  useEffect(() => {
+    getClients().then(data => {
+      setClients(data)
+      setLoading(false)
+    })
+  }, [])
 
   function set(id, key, val) {
     setClients(cs => cs.map(c => c.id === id ? { ...c, [key]: val } : c))
   }
 
   function addClient() {
-    setClients(cs => [...cs, { id: newId(), name: '', logo: '' }])
+    setClients(cs => [...cs, { id: newTempId(), name: '', logo: '' }])
   }
 
   function remove(id) {
@@ -39,10 +48,23 @@ export default function ClientsForm() {
     setUploading(u => ({ ...u, [id]: false }))
   }
 
-  function handleSave() {
-    saveClients(clients)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2800)
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await saveClients(clients)
+      // Refetch to get proper UUIDs for any newly inserted clients
+      const refreshed = await getClients()
+      setClients(refreshed)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2800)
+    } catch {
+      alert('Save failed. Please try again.')
+    }
+    setSaving(false)
+  }
+
+  if (loading) {
+    return <div style={{ paddingTop: 80, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Loading…</div>
   }
 
   return (
@@ -126,9 +148,10 @@ export default function ClientsForm() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
         <button
           onClick={handleSave}
-          style={{ padding: '11px 32px', background: 'var(--accent)', color: 'var(--bg)', border: 'none', borderRadius: 3, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'inherit', cursor: 'pointer', fontWeight: 500 }}
+          disabled={saving}
+          style={{ padding: '11px 32px', background: 'var(--accent)', color: 'var(--bg)', border: 'none', borderRadius: 3, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'inherit', cursor: saving ? 'default' : 'pointer', fontWeight: 500, opacity: saving ? 0.7 : 1 }}
         >
-          Save Clients
+          {saving ? 'Saving…' : 'Save Clients'}
         </button>
         {saved && <span style={{ fontSize: 12, color: 'var(--success)', letterSpacing: '0.04em' }}>✓ Saved — updated on homepage</span>}
       </div>

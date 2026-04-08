@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react'
-import { getAbout } from '../storage'
+import { getAbout, DEFAULT_ABOUT } from '../storage'
 
 const divider = { height: 1, background: 'var(--border)', margin: '52px 0' }
 const secLabel = { fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 32, display: 'flex', alignItems: 'center', gap: 16 }
 const line = { flex: 1, height: 1, background: 'var(--border)' }
 
 export default function AboutPage() {
-  const [a, setA] = useState(getAbout)
+  const [a,       setA]       = useState(DEFAULT_ABOUT)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const h = () => setA(getAbout())
-    window.addEventListener('mazin:about', h)
-    window.addEventListener('storage', h)
-    return () => { window.removeEventListener('mazin:about', h); window.removeEventListener('storage', h) }
+    getAbout().then(data => { setA(data); setLoading(false) })
+    const reload = () => getAbout().then(setA)
+    window.addEventListener('mazin:about', reload)
+    return () => window.removeEventListener('mazin:about', reload)
   }, [])
+
+  if (loading) {
+    return (
+      <div style={{ paddingTop: 'var(--nav-h)', minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>Loading…</p>
+      </div>
+    )
+  }
 
   return (
     <div style={{ paddingTop: 'var(--nav-h)', minHeight: '100vh', background: 'var(--bg)' }}>

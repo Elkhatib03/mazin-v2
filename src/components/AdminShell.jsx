@@ -1,41 +1,61 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getProjects, saveProjects, uid } from '../storage'
+import { getProjects, saveProject, deleteProject } from '../storage'
 import ProjectForm from './ProjectForm'
 import AboutForm from './AboutForm'
 import ClientsForm from './ClientsForm'
 
 export default function AdminShell({ onLogout }) {
   const [tab,      setTab]      = useState('projects')
-  const [projects, setProjects] = useState(getProjects)
+  const [projects, setProjects] = useState([])
+  const [loading,  setLoading]  = useState(true)
   const [editId,   setEditId]   = useState(null)
   const [isNew,    setIsNew]    = useState(false)
 
-  function save(updated) {
-    let next
-    if (isNew) {
-      const p = { ...updated, id: uid() }
-      next = [p, ...projects]
-      setIsNew(false); setEditId(p.id)
-    } else {
-      next = projects.map(p => p.id === editId ? { ...updated, id: editId } : p)
-    }
-    setProjects(next); saveProjects(next)
+  async function loadProjects() {
+    const data = await getProjects()
+    setProjects(data)
+    setLoading(false)
   }
 
-  function deleteProject() {
+  useEffect(() => { loadProjects() }, [])
+
+  async function save(updated) {
+    try {
+      if (isNew) {
+        const newId = await saveProject(updated)
+        setIsNew(false)
+        setEditId(newId)
+      } else {
+        await saveProject({ ...updated, id: editId })
+      }
+      await loadProjects()
+    } catch {
+      alert('Save failed. Please try again.')
+    }
+  }
+
+  async function doDelete() {
     const p = projects.find(x => x.id === editId)
     if (!confirm(`Delete "${p?.title}"?`)) return
-    const next = projects.filter(x => x.id !== editId)
-    setProjects(next); saveProjects(next)
-    setEditId(null); setIsNew(false)
+    try {
+      await deleteProject(editId)
+      setEditId(null); setIsNew(false)
+      await loadProjects()
+    } catch {
+      alert('Delete failed. Please try again.')
+    }
   }
 
-  function deleteSidebar(id) {
+  async function deleteSidebar(id) {
     if (!confirm('Delete this project?')) return
-    const next = projects.filter(x => x.id !== id)
-    setProjects(next); saveProjects(next)
-    if (editId === id) { setEditId(null); setIsNew(false) }
+    try {
+      await deleteProject(id)
+      if (editId === id) { setEditId(null); setIsNew(false) }
+      await loadProjects()
+    } catch {
+      alert('Delete failed. Please try again.')
+    }
   }
 
   const editing  = projects.find(p => p.id === editId) || null
@@ -101,12 +121,15 @@ export default function AdminShell({ onLogout }) {
               </div>
               {/* List */}
               <div style={{ flex: 1, overflowY: 'auto', padding: 10 }}>
+                {loading && (
+                  <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12, paddingTop: 32 }}>Loading…</p>
+                )}
                 {isNew && (
                   <div style={{ padding: '10px 12px', borderRadius: 3, border: '1px solid var(--accent)', background: 'rgba(201,164,110,0.06)', marginBottom: 6 }}>
                     <p style={{ fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>New project…</p>
                   </div>
                 )}
-                {!projects.length && !isNew && (
+                {!loading && !projects.length && !isNew && (
                   <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12, paddingTop: 32 }}>No projects yet</p>
                 )}
                 {projects.map(p => (
@@ -122,7 +145,7 @@ export default function AdminShell({ onLogout }) {
             {/* Form area */}
             <main style={{ flex: 1, overflowY: 'auto', padding: '40px 48px', background: 'var(--bg)' }}>
               {(isNew || editing)
-                ? <ProjectForm key={isNew ? 'new' : editId} project={editing} isNew={isNew} onSave={save} onDelete={deleteProject} />
+                ? <ProjectForm key={isNew ? 'new' : editId} project={editing} isNew={isNew} onSave={save} onDelete={doDelete} />
                 : (
                   <div style={{ textAlign: 'center', paddingTop: 120, color: 'var(--muted)' }}>
                     <p style={{ fontSize: 14, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 12 }}>Select a project</p>

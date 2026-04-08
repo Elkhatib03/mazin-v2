@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { getAbout, saveAbout } from '../storage'
+import { useState, useEffect } from 'react'
+import { getAbout, saveAbout, DEFAULT_ABOUT } from '../storage'
 
 const fi = { width: '100%', padding: '11px 14px', border: '1px solid var(--border)', borderRadius: 3, fontSize: 13, fontFamily: 'inherit', background: 'var(--bg2)', color: 'var(--text)', outline: 'none', marginBottom: 20, transition: 'border-color 0.2s' }
 const lb = { display: 'block', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 7 }
@@ -15,21 +15,47 @@ function Sec({ children }) {
 }
 
 export default function AboutForm() {
-  const [form, setForm] = useState(getAbout)
-  const [saved, setSaved] = useState(false)
+  const [form,    setForm]    = useState(DEFAULT_ABOUT)
+  const [loading, setLoading] = useState(true)
+  const [saved,   setSaved]   = useState(false)
+  const [saving,  setSaving]  = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const [expText, setExpText] = useState(() => JSON.stringify(form.experience, null, 2))
-  const [eduText, setEduText] = useState(() => JSON.stringify(form.education,  null, 2))
-  const [srvText, setSrvText] = useState(() => JSON.stringify(form.services,   null, 2))
+  const [expText, setExpText] = useState(() => JSON.stringify(DEFAULT_ABOUT.experience, null, 2))
+  const [eduText, setEduText] = useState(() => JSON.stringify(DEFAULT_ABOUT.education,  null, 2))
+  const [srvText, setSrvText] = useState(() => JSON.stringify(DEFAULT_ABOUT.services,   null, 2))
   const [jsonErr, setJsonErr] = useState({})
+
+  useEffect(() => {
+    getAbout().then(data => {
+      setForm(data)
+      setExpText(JSON.stringify(data.experience, null, 2))
+      setEduText(JSON.stringify(data.education,  null, 2))
+      setSrvText(JSON.stringify(data.services,   null, 2))
+      setLoading(false)
+    })
+  }, [])
 
   function tryJSON(text, key) {
     try { setForm(f => ({ ...f, [key]: JSON.parse(text) })); setJsonErr(e => ({ ...e, [key]: null })) }
     catch (err) { setJsonErr(e => ({ ...e, [key]: err.message })) }
   }
 
-  function handleSave() { saveAbout(form); setSaved(true); setTimeout(() => setSaved(false), 2800) }
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await saveAbout(form)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2800)
+    } catch {
+      alert('Save failed. Please try again.')
+    }
+    setSaving(false)
+  }
+
+  if (loading) {
+    return <div style={{ paddingTop: 80, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Loading…</div>
+  }
 
   return (
     <div>
@@ -86,8 +112,8 @@ export default function AboutForm() {
       {jsonErr.education && <p style={{ color: 'var(--danger)', fontSize: 11, marginTop: -14, marginBottom: 16 }}>⚠ {jsonErr.education}</p>}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
-        <button onClick={handleSave} style={{ padding: '11px 32px', background: 'var(--accent)', color: 'var(--bg)', border: 'none', borderRadius: 3, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'inherit', cursor: 'pointer', fontWeight: 500 }}>
-          Save About Page
+        <button onClick={handleSave} disabled={saving} style={{ padding: '11px 32px', background: 'var(--accent)', color: 'var(--bg)', border: 'none', borderRadius: 3, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'inherit', cursor: saving ? 'default' : 'pointer', fontWeight: 500, opacity: saving ? 0.7 : 1 }}>
+          {saving ? 'Saving…' : 'Save About Page'}
         </button>
         {saved && <span style={{ fontSize: 12, color: 'var(--success)' }}>✓ Saved</span>}
       </div>
