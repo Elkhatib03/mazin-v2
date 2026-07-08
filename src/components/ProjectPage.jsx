@@ -63,8 +63,31 @@ export default function ProjectPage() {
           </div>
         )}
 
-        {/* Images */}
-        {allImages.length > 0 && (
+        {/* Content blocks (new) or fallback to images */}
+        {(project.blocks && project.blocks.length > 0) ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 64 }}>
+            {project.blocks.map((block, i) =>
+              block.type === 'image' && block.url ? (
+                <div key={i} onClick={() => setLightboxImg(block.url)}
+                  style={{ cursor: 'zoom-in', background: 'var(--bg3)', overflow: 'hidden', borderRadius: 2 }}>
+                  <img src={block.url} alt={`${project.title} ${i + 1}`}
+                    style={{ width: '100%', display: 'block', transition: 'opacity 0.25s' }}
+                    onMouseEnter={e => e.target.style.opacity = '0.88'}
+                    onMouseLeave={e => e.target.style.opacity = '1'}
+                  />
+                </div>
+              ) : block.type === 'text' && block.content ? (
+                <div key={i} style={{ padding: '32px 0', maxWidth: 660 }}>
+                  {block.content.split('\n\n').map((para, j) => (
+                    <p key={j} style={{ fontSize: 15, lineHeight: 1.85, color: 'var(--text)', opacity: 0.8, marginBottom: 20 }}>
+                      {para}
+                    </p>
+                  ))}
+                </div>
+              ) : null
+            )}
+          </div>
+        ) : allImages.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 64 }}>
             {allImages.map((img, i) => (
               <div key={i} onClick={() => setLightboxImg(img)}
@@ -77,7 +100,7 @@ export default function ProjectPage() {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
 
         {/* Credits */}
         {project.credits && (

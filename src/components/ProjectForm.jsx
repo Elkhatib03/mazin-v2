@@ -5,59 +5,92 @@ const fi = { width: '100%', padding: '11px 14px', border: '1px solid var(--borde
 const lb = { display: 'block', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 7 }
 const fo = e => e.target.style.borderColor = 'var(--accent)'
 const fb = e => e.target.style.borderColor = 'var(--border)'
+const btnSm = { background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: 2, width: 22, height: 22, cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }
 
 export default function ProjectForm({ project, isNew, onSave, onDelete }) {
-  const [form, setForm]     = useState({ title: '', tag: '', description: '', credits: '', image: '', photos: [], status: 'published' })
-  const [saved, setSaved]   = useState(false)
-  const [dragging, setDrag] = useState(false)
-  const [uploading, setUpl] = useState(false)
-  const coverRef            = useRef()
-  const extrasRef           = useRef()
+  const [form, setForm]         = useState({ title: '', tag: '', description: '', credits: '', image: '', photos: [], blocks: [], status: 'published' })
+  const [saved, setSaved]       = useState(false)
+  const [dragging, setDrag]     = useState(false)
+  const [uploading, setUpl]     = useState(false)
+  const [pendingBI, setPending] = useState(null) // pending block index for image upload
+  const coverRef                = useRef()
+  const blockImgRef             = useRef()
 
   useEffect(() => {
     setForm(project ? {
       title: project.title || '', tag: project.tag || '',
       description: project.description || '', credits: project.credits || '',
       image: project.image || '', photos: project.photos || [],
+      blocks: project.blocks || [],
       status: project.status || 'published',
-    } : { title: '', tag: '', description: '', credits: '', image: '', photos: [], status: 'published' })
+    } : { title: '', tag: '', description: '', credits: '', image: '', photos: [], blocks: [], status: 'published' })
     setSaved(false)
   }, [project])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  async function uploadFile(file, isCover) {
+  async function uploadFile(file) {
     if (!file || !file.type.startsWith('image/')) return
     setUpl(true)
     try {
       const url = await uploadToCloudinary(file)
-      if (isCover) set('image', url)
-      else setForm(f => ({ ...f, photos: [...f.photos, url] }))
+      set('image', url)
     } catch { alert('Upload failed. Check your connection and try again.') }
     setUpl(false)
   }
 
-  async function uploadMultiple(files) {
+  async function uploadBlockImage(file) {
+    if (!file || !file.type.startsWith('image/') || pendingBI === null) return
+    const idx = pendingBI
     setUpl(true)
-    const results = []
-    for (const file of files) {
-      if (file.type.startsWith('image/')) {
-        try { results.push(await uploadToCloudinary(file)) } catch {}
-      }
-    }
-    setForm(f => ({ ...f, photos: [...f.photos, ...results] }))
+    try {
+      const url = await uploadToCloudinary(file)
+      setForm(f => {
+        const blocks = [...f.blocks]
+        blocks[idx] = { ...blocks[idx], url }
+        return { ...f, blocks }
+      })
+    } catch { alert('Upload failed.') }
     setUpl(false)
+    setPending(null)
   }
 
-  function removePhoto(idx) { setForm(f => ({ ...f, photos: f.photos.filter((_, i) => i !== idx) })) }
+  function triggerBlockUpload(i) {
+    setPending(i)
+    blockImgRef.current.value = ''
+    blockImgRef.current.click()
+  }
 
-  function movePhoto(idx, dir) {
+  function addTextBlock() {
+    setForm(f => ({ ...f, blocks: [...f.blocks, { type: 'text', content: '' }] }))
+  }
+
+  function addImageBlock() {
+    const newIdx = form.blocks.length
+    setForm(f => ({ ...f, blocks: [...f.blocks, { type: 'image', url: '' }] }))
+    setPending(newIdx)
+    setTimeout(() => { blockImgRef.current.value = ''; blockImgRef.current.click() }, 0)
+  }
+
+  function updateBlock(i, patch) {
     setForm(f => {
-      const photos = [...f.photos]
-      const swap = idx + dir
-      if (swap < 0 || swap >= photos.length) return f
-      ;[photos[idx], photos[swap]] = [photos[swap], photos[idx]]
-      return { ...f, photos }
+      const blocks = [...f.blocks]
+      blocks[i] = { ...blocks[i], ...patch }
+      return { ...f, blocks }
+    })
+  }
+
+  function removeBlock(i) {
+    setForm(f => ({ ...f, blocks: f.blocks.filter((_, idx) => idx !== i) }))
+  }
+
+  function moveBlock(i, dir) {
+    setForm(f => {
+      const blocks = [...f.blocks]
+      const swap = i + dir
+      if (swap < 0 || swap >= blocks.length) return f
+      ;[blocks[i], blocks[swap]] = [blocks[swap], blocks[i]]
+      return { ...f, blocks }
     })
   }
 
@@ -88,7 +121,7 @@ export default function ProjectForm({ project, isNew, onSave, onDelete }) {
         <div
           onDragOver={e => { e.preventDefault(); setDrag(true) }}
           onDragLeave={() => setDrag(false)}
-          onDrop={e => { e.preventDefault(); setDrag(false); uploadFile(e.dataTransfer.files[0], true) }}
+          onDrop={e => { e.preventDefault(); setDrag(false); uploadFile(e.dataTransfer.files[0]) }}
           onClick={() => coverRef.current.click()}
           style={{ border: `2px dashed ${dragging ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 3, padding: '32px 20px', textAlign: 'center', cursor: 'pointer', background: dragging ? 'rgba(201,164,110,0.05)' : 'transparent', marginBottom: 16, transition: 'all 0.2s' }}
         >
@@ -96,7 +129,7 @@ export default function ProjectForm({ project, isNew, onSave, onDelete }) {
           {uploading && <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>Processing…</p>}
         </div>
       )}
-      <input ref={coverRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => uploadFile(e.target.files[0], true)} />
+      <input ref={coverRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => uploadFile(e.target.files[0])} />
 
       {/* URL fallback */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -108,36 +141,6 @@ export default function ProjectForm({ project, isNew, onSave, onDelete }) {
         onChange={e => set('image', e.target.value)} onFocus={fo} onBlur={fb}
         placeholder="https://…" style={fi} />
 
-      {/* Extra photos */}
-      <label style={lb}>Additional Photos</label>
-      {form.photos.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 12 }}>
-          {form.photos.map((img, i) => (
-            <div key={i} style={{ position: 'relative', background: 'var(--bg3)', borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border)' }}>
-              <img src={img} alt="" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: 4, opacity: 0, transition: 'opacity 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
-                <div style={{ display: 'flex', gap: 3 }}>
-                  <button onClick={() => movePhoto(i, -1)} disabled={i === 0} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: 2, width: 22, height: 22, cursor: 'pointer', fontSize: 11 }}>←</button>
-                  <button onClick={() => movePhoto(i, 1)} disabled={i === form.photos.length - 1} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: 2, width: 22, height: 22, cursor: 'pointer', fontSize: 11 }}>→</button>
-                </div>
-                <button onClick={() => removePhoto(i)} style={{ background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: 2, width: 22, height: 22, cursor: 'pointer', fontSize: 13 }}>×</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <div
-        onDragOver={e => { e.preventDefault(); setDrag(true) }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={e => { e.preventDefault(); setDrag(false); uploadFile(e.dataTransfer.files[0], false) }}
-        onClick={() => extrasRef.current.click()}
-        style={{ border: `1px dashed var(--border)`, borderRadius: 3, padding: '14px', textAlign: 'center', cursor: 'pointer', marginBottom: 20, transition: 'all 0.2s' }}
-      >
-        <p style={{ fontSize: 12, color: 'var(--muted)' }}>+ Add more photos</p>
-      </div>
-      <input ref={extrasRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => uploadMultiple(Array.from(e.target.files))} />
-
       {/* Fields */}
       <label style={lb}>Project Title *</label>
       <input type="text" value={form.title} onChange={e => set('title', e.target.value)} onFocus={fo} onBlur={fb} placeholder="e.g. Brand Identity — Nour Studio" style={fi} />
@@ -145,7 +148,12 @@ export default function ProjectForm({ project, isNew, onSave, onDelete }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
           <label style={lb}>Category / Tag</label>
-          <input type="text" value={form.tag} onChange={e => set('tag', e.target.value)} onFocus={fo} onBlur={fb} placeholder="Branding, Campaign…" style={fi} />
+          <select value={form.tag} onChange={e => set('tag', e.target.value)} onFocus={fo} onBlur={fb} style={fi}>
+            <option value="">— Select —</option>
+            <option value="Events">Events</option>
+            <option value="Advertising">Advertising</option>
+            <option value="Branding">Branding</option>
+          </select>
         </div>
         <div>
           <label style={lb}>Visibility</label>
@@ -160,8 +168,63 @@ export default function ProjectForm({ project, isNew, onSave, onDelete }) {
       <textarea rows={5} value={form.description} onChange={e => set('description', e.target.value)} onFocus={fo} onBlur={fb}
         placeholder="Describe the project. Blank line = new paragraph." style={{ ...fi, resize: 'vertical' }} />
 
+      {/* Content Blocks */}
+      <label style={lb}>Content Blocks</label>
+      <p style={{ fontSize: 11, color: 'var(--subtle)', marginBottom: 12 }}>
+        Mix photos and text in any order — shown on the project page
+      </p>
+
+      {form.blocks.map((block, i) => (
+        <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 3, marginBottom: 8, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 10px', background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+              {block.type === 'image' ? 'Image' : 'Text'}
+            </span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button onClick={() => moveBlock(i, -1)} disabled={i === 0} style={btnSm}>↑</button>
+              <button onClick={() => moveBlock(i, 1)} disabled={i === form.blocks.length - 1} style={btnSm}>↓</button>
+              <button onClick={() => removeBlock(i)} style={{ ...btnSm, background: 'rgba(180,40,40,0.7)' }}>×</button>
+            </div>
+          </div>
+
+          {block.type === 'text' ? (
+            <textarea
+              rows={4}
+              value={block.content}
+              onChange={e => updateBlock(i, { content: e.target.value })}
+              onFocus={fo} onBlur={fb}
+              placeholder="Enter text…"
+              style={{ width: '100%', padding: '11px 14px', border: 'none', borderRadius: 0, fontSize: 13, fontFamily: 'inherit', background: 'var(--bg2)', color: 'var(--text)', outline: 'none', resize: 'vertical', display: 'block' }}
+            />
+          ) : (
+            block.url ? (
+              <div style={{ position: 'relative' }}>
+                <img src={block.url} alt="" style={{ width: '100%', display: 'block', maxHeight: 220, objectFit: 'cover' }} />
+                <button onClick={() => updateBlock(i, { url: '' })} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: 2, width: 24, height: 24, cursor: 'pointer', fontSize: 14 }}>×</button>
+              </div>
+            ) : (
+              <div onClick={() => triggerBlockUpload(i)} style={{ padding: '24px', textAlign: 'center', cursor: 'pointer', background: 'var(--bg2)' }}>
+                <p style={{ fontSize: 12, color: uploading && pendingBI === i ? 'var(--accent)' : 'var(--muted)' }}>
+                  {uploading && pendingBI === i ? 'Uploading…' : 'Click to upload image'}
+                </p>
+              </div>
+            )
+          )}
+        </div>
+      ))}
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+        <button onClick={addTextBlock} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'inherit', cursor: 'pointer' }}>
+          + Text Block
+        </button>
+        <button onClick={addImageBlock} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--muted)', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'inherit', cursor: 'pointer' }}>
+          + Image Block
+        </button>
+      </div>
+      <input ref={blockImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => uploadBlockImage(e.target.files[0])} />
+
       <label style={lb}>Credits</label>
-      <p style={{ fontSize: 11, color: 'var(--subtle)', marginBottom: 8, marginTop: -14 }}>One per line: "Role: Art Direction"</p>
+      <p style={{ fontSize: 11, color: 'var(--subtle)', marginBottom: 8 }}>One per line: "Role: Art Direction"</p>
       <textarea rows={5} value={form.credits} onChange={e => set('credits', e.target.value)} onFocus={fo} onBlur={fb}
         placeholder={'Role: Art Direction\nClient: Brand Name\nAgency: Studio\nYear: 2024'}
         style={{ ...fi, resize: 'vertical', fontFamily: 'monospace', fontSize: 12 }} />

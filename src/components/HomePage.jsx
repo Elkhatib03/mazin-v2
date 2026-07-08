@@ -44,11 +44,14 @@ function LogoBar() {
   )
 }
 
+const FILTERS = ['All', 'Events', 'Advertising', 'Branding']
+
 export default function HomePage() {
   const [projects, setProjects] = useState([])
   const [loading,  setLoading]  = useState(true)
   const [scrollY,  setScrollY]  = useState(0)
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
+  const [activeFilter, setActiveFilter] = useState('All')
 
   useEffect(() => {
     getProjects().then(data => {
@@ -92,7 +95,7 @@ export default function HomePage() {
           color: 'var(--muted)',
           fontWeight: 500,
         }}>
-          Portfolio — 2025
+          Portfolio — 2026
         </span>
 
         <p style={{
@@ -139,16 +142,44 @@ export default function HomePage() {
         </div>
       ) : (
         <div className="project-grid-offset">
+          <div className="filter-bar">
+            {FILTERS.map(f => {
+              const isActive = activeFilter === f
+              return (
+                <button
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  style={{
+                    padding: '7px 18px',
+                    borderRadius: 999,
+                    border: '1px solid var(--border)',
+                    fontSize: 11,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    background: isActive ? '#ffffff' : 'transparent',
+                    color: isActive ? '#000000' : 'var(--muted)',
+                    transition: 'background 0.2s, color 0.2s',
+                  }}
+                >
+                  {f}
+                </button>
+              )
+            })}
+          </div>
           <div className="project-grid-header">
             <span style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
               Selected Work
             </span>
             <span style={{ fontSize: 11, letterSpacing: '0.08em', color: 'var(--subtle)' }}>
-              {projects.length} Projects
+              {projects.filter(p => activeFilter === 'All' || p.tag === activeFilter).length} Projects
             </span>
           </div>
           <div className="project-grid">
-            {projects.map(p => <GridItem key={p.id} project={p} />)}
+            {projects
+              .filter(p => activeFilter === 'All' || p.tag === activeFilter)
+              .map(p => <GridItem key={p.id} project={p} />)}
           </div>
         </div>
       )}

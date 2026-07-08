@@ -100,6 +100,7 @@ function dbToProject(row) {
     credits:     row.credits         || '',
     image:       row.cover_image     || '',
     photos:      row.gallery_images  || [],
+    blocks:      row.content_blocks  || [],
     status:      row.published ? 'published' : 'draft',
   }
 }
@@ -112,6 +113,7 @@ function projectToDb(p) {
     credits:        p.credits     || '',
     cover_image:    p.image       || '',
     gallery_images: p.photos      || [],
+    content_blocks: p.blocks      || [],
     published:      p.status === 'published',
   }
 }
